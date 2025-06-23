@@ -27,7 +27,7 @@ class XHRMonitorContent {
       
       // 处理握手消息！！！
       if (event.data.type === 'INJECTED_SCRIPT_READY') {
-        console.log('[MONGO 日志] 收到 Injected Script 的 "Ready" 信号');
+        console.log('[MENG 日志] 收到 Injected Script 的 "Ready" 信号');
         this.injectedScriptReady = true;
         // 如果我们已经在监听状态，立即发送 start 命令
         if (this.isListening) {
@@ -36,10 +36,10 @@ class XHRMonitorContent {
       }
     });
 
-    console.log('[MONGO 日志] XHR 监听器内容脚本已加载');
+    console.log('[MENG 日志] XHR 监听器内容脚本已加载');
 
     const onDOMContentLoaded = async () => {
-      console.log('[MONGO 日志] DOM 已加载，开始初始化脚本和 UI');
+      console.log('[MENG 日志] DOM 已加载，开始初始化脚本和 UI');
       this.injectScript();
       await this.restoreState();
     };
@@ -56,7 +56,7 @@ class XHRMonitorContent {
     try {
       const response = await chrome.runtime.sendMessage({ action: 'getInitialState' });
       if (response && response.success) {
-        console.log('[MONGO 日志] 成功恢复状态:', response);
+        console.log('[MENG 日志] 成功恢复状态:', response);
         this.requestCount = response.requestCount || 0;
         if (response.isListening) {
           this.isListening = true;
@@ -65,13 +65,13 @@ class XHRMonitorContent {
         }
       }
     } catch (error) {
-      console.log('[MONGO 错误] 恢复状态失败:', error);
+      console.log('[MENG 错误] 恢复状态失败:', error);
     }
   }
 
   // 处理来自 popup 的消息
   handleMessage(message, sender, sendResponse) {
-    console.log('[MONGO 日志] 收到来自 Popup 的消息:', message);
+    console.log('[MENG 日志] 收到来自 Popup 的消息:', message);
     switch (message.action) {
       case 'startListening':
         this.startListening();
@@ -104,7 +104,7 @@ class XHRMonitorContent {
   // 开始监听
   startListening() {
     this.isListening = true;
-    console.log('[MONGO 日志] 开始监听 XHR 请求');
+    console.log('[MENG 日志] 开始监听 XHR 请求');
     
     this.injectScript(); 
     
@@ -120,13 +120,13 @@ class XHRMonitorContent {
   stopListening() {
     this.isListening = false;
     this.notifyPageScript('stop');
-    console.log('[MONGO 日志] 停止监听 XHR 请求');
+    console.log('[MENG 日志] 停止监听 XHR 请求');
     this.removeOverlay();
     
     if (this.bodyObserver) {
       this.bodyObserver.disconnect();
       this.bodyObserver = null;
-      console.log('[MONGO 日志] Body observer 已断开');
+      console.log('[MENG 日志] Body observer 已断开');
     }
     // 停止动画
     if (this.animationInterval) {
@@ -139,14 +139,14 @@ class XHRMonitorContent {
   clearRecords() {
     this.requestCount = 0;
     this.updateOverlayCount(0);
-    console.log('[MONGO 日志] 已清空 XHR 请求记录');
+    console.log('[MENG 日志] 已清空 XHR 请求记录');
   }
 
   // 注入脚本到页面
   injectScript() {
     // 检查脚本是否已经注入
     if (document.querySelector('script[data-xhr-monitor="injected"]')) {
-      console.log('[MONGO 日志] 监听脚本已存在，跳过注入');
+      console.log('[MENG 日志] 监听脚本已存在，跳过注入');
       return;
     }
 
@@ -155,20 +155,20 @@ class XHRMonitorContent {
       script.src = chrome.runtime.getURL('injected.js');
       script.setAttribute('data-xhr-monitor', 'injected');
       script.onload = () => {
-        console.log('[MONGO 日志] XHR 监听脚本注入成功');
+        console.log('[MENG 日志] XHR 监听脚本注入成功');
       };
       script.onerror = () => {
-        console.log('[MONGO 错误] XHR 监听脚本注入失败');
+        console.log('[MENG 错误] XHR 监听脚本注入失败');
       };
       (document.head || document.documentElement).appendChild(script);
     } catch (error) {
-      console.log('[MONGO 错误] 注入脚本时发生错误:', error);
+      console.log('[MENG 错误] 注入脚本时发生错误:', error);
     }
   }
 
   // 通知页面脚本
   notifyPageScript(action) {
-    console.log('[MONGO 日志] 向页面脚本发送控制消息:', action);
+    console.log('[MENG 日志] 向页面脚本发送控制消息:', action);
     window.postMessage({
       type: 'XHR_MONITOR_CONTROL',
       action: action
@@ -192,13 +192,13 @@ class XHRMonitorContent {
         // 使用后台返回的权威计数
         this.requestCount = response.newCount;
         this.updateOverlayCount(this.requestCount);
-        console.log('[MONGO 日志] 请求计数更新:', this.requestCount);
-        console.log('[MONGO 日志] XHR 请求已记录:', requestData.url);
+        console.log('[MENG 日志] 请求计数更新:', this.requestCount);
+        console.log('[MENG 日志] XHR 请求已记录:', requestData.url);
       } else {
-        console.log('[MONGO 错误] 存储请求失败:', response);
+        console.log('[MENG 错误] 存储请求失败:', response);
       }
     } catch (error) {
-      console.log('[MONGO 错误] 处理 XHR 请求失败:', error);
+      console.log('[MENG 错误] 处理 XHR 请求失败:', error);
     }
   }
 
@@ -219,7 +219,7 @@ class XHRMonitorContent {
           });
 
           if (overlayNodeRemoved && this.isListening) {
-            console.log('[MONGO 日志] Overlay element 已被移除，正在重新创建...');
+            console.log('[MENG 日志] Overlay element 已被移除，正在重新创建...');
             this.overlayElement = null; 
             this.createOverlay();
             return; 
@@ -233,7 +233,7 @@ class XHRMonitorContent {
       subtree: false // 只关心 body 的直接子节点变化
     });
     
-    console.log('[MONGO 日志] 正在监视 document.body 以检测悬浮窗移除');
+    console.log('[MENG 日志] 正在监视 document.body 以检测悬浮窗移除');
   }
 
   startBreathingAnimation(element) {
@@ -405,5 +405,5 @@ class XHRMonitorContent {
 }
 
 // 初始化内容脚本
-console.log('[MONGO 日志] 准备初始化 XHR 监听器内容脚本');
+console.log('[MENG 日志] 准备初始化 XHR 监听器内容脚本');
 new XHRMonitorContent(); 

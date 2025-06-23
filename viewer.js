@@ -30,7 +30,7 @@ class XHRViewer {
         document.getElementById('pageTitle').textContent = `来自标签页: ${tabTitle}`;
 
         // 如果URL中提供了 tabId，则加载特定标签页的数据
-        console.log(`[MONGO 日志] 准备加载标签页 ${tabId} (${tabTitle}) 的请求记录`);
+        console.log(`[MENG 日志] 准备加载标签页 ${tabId} (${tabTitle}) 的请求记录`);
         const result = await chrome.storage.local.get([tabId]);
         this.requests = result[tabId] || [];
         this.renderRequests();
@@ -39,7 +39,7 @@ class XHRViewer {
       } else {
         // 否则，加载所有标签页的数据作为后备
         document.getElementById('pageTitle').textContent = '所有标签页的请求记录';
-        console.log('[MONGO 日志] 未提供 tabId，加载所有标签页的记录');
+        console.log('[MENG 日志] 未提供 tabId，加载所有标签页的记录');
         const allData = await chrome.storage.local.get(null);
         let allRequests = [];
         Object.keys(allData).forEach(key => {
@@ -56,7 +56,7 @@ class XHRViewer {
       }
 
     } catch (error) {
-      console.log('[MONGO 错误] 加载请求记录失败:', error);
+      console.log('[MENG 错误] 加载请求记录失败:', error);
       this.updateStatus('加载失败');
       this.renderError('加载请求记录时发生错误');
     }
@@ -196,7 +196,7 @@ class XHRViewer {
       await navigator.clipboard.writeText(responseText);
       this.showToast('响应数据已复制');
     } catch (error) {
-      console.log('[MONGO 错误] 复制响应失败:', error);
+      console.log('[MENG 错误] 复制响应失败:', error);
       this.showToast('复制响应失败');
     }
   }
@@ -221,7 +221,7 @@ class XHRViewer {
       await navigator.clipboard.writeText(requestText);
       this.showToast('单条记录已复制');
     } catch (error) {
-      console.log('[MONGO 错误] 复制记录失败:', error);
+      console.log('[MENG 错误] 复制记录失败:', error);
       this.showToast('复制失败');
     }
   }
@@ -249,7 +249,7 @@ class XHRViewer {
       await navigator.clipboard.writeText(allRequestsText);
       this.showToast(`已复制 ${this.requests.length} 条记录`);
     } catch (error) {
-      console.log('[MONGO 错误] 复制全部记录失败:', error);
+      console.log('[MENG 错误] 复制全部记录失败:', error);
       this.showToast('复制失败');
     }
   }
@@ -268,7 +268,7 @@ class XHRViewer {
       try {
         await chrome.tabs.sendMessage(parseInt(this.currentTabId, 10), { action: 'clearRecords' });
       } catch (e) {
-        console.log('[MONGO 错误] 通知 content script 失败 (标签页可能已关闭):', e);
+        console.log('[MENG 错误] 通知 content script 失败 (标签页可能已关闭):', e);
       }
 
       this.requests = [];
@@ -276,7 +276,7 @@ class XHRViewer {
       this.updateStatus('记录已清空');
       this.showToast('所有记录已清空');
     } catch (error) {
-      console.log('[MONGO 错误] 清空记录失败:', error);
+      console.log('[MENG 错误] 清空记录失败:', error);
       this.showToast('清空失败');
     }
   }

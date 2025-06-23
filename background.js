@@ -13,7 +13,7 @@ class XHRMonitorBackground {
 
     // 扩展安装或启动时的初始化
     chrome.runtime.onInstalled.addListener(() => {
-      console.log('[MONGO 日志] XHR 监听器已安装');
+      console.log('[MENG 日志] XHR 监听器已安装');
     });
 
     // 监听来自 content script 的消息
@@ -28,9 +28,9 @@ class XHRMonitorBackground {
     try {
       const tabIdStr = tabId.toString();
       await chrome.storage.local.remove([tabIdStr, `state_${tabIdStr}`]); // 同时清理数据和状态
-      console.log(`[MONGO 日志] 已清理标签页 ${tabId} 的数据和状态`);
+      console.log(`[MENG 日志] 已清理标签页 ${tabId} 的数据和状态`);
     } catch (error) {
-      console.log(`[MONGO 错误] 清理标签页 ${tabId} 数据失败:`, error);
+      console.log(`[MENG 错误] 清理标签页 ${tabId} 数据失败:`, error);
     }
   }
 
@@ -70,7 +70,7 @@ class XHRMonitorBackground {
           sendResponse({ success: false, error: '未知操作' });
       }
     } catch (error) {
-      console.log('[MONGO 错误] 处理消息失败:', error);
+      console.log('[MENG 错误] 处理消息失败:', error);
       sendResponse({ success: false, error: error.message });
     }
   }
@@ -113,9 +113,9 @@ class XHRMonitorBackground {
       action: 'updateCount',
       count: newCount,
       tabId: tabId
-    }).catch(e => console.log("[MONGO 错误] 发送更新计数广播失败 (可能是没有接收方):", e));
+    }).catch(e => console.log("[MENG 错误] 发送更新计数广播失败 (可能是没有接收方):", e));
 
-    console.log(`[MONGO 日志] 已存储请求到标签页 ${tabId}, 总数: ${newCount}`);
+    console.log(`[MENG 日志] 已存储请求到标签页 ${tabId}, 总数: ${newCount}`);
     return newCount; // 返回最新的数量
   }
 

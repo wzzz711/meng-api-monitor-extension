@@ -7,7 +7,7 @@
   let interceptorsInstalled = false;
   let isPageUnloading = false;
 
-  console.log('[MONGO 日志] XHR 监听脚本开始加载，页面:', window.location.href);
+  console.log('[MENG 日志] XHR 监听脚本开始加载，页面:', window.location.href);
 
   // 添加一个监听器，在页面即将卸载时设置标志
   window.addEventListener('beforeunload', () => {
@@ -18,10 +18,10 @@
   window.addEventListener('message', function (event) {
     if (event.source !== window) return;
     if (event.data.type === 'XHR_MONITOR_CONTROL') {
-      console.log('[MONGO 日志] 收到控制消息:', event.data);
+      console.log('[MENG 日志] 收到控制消息:', event.data);
       if (event.data.action === 'start') {
         isMonitoring = true;
-        console.log('[MONGO 日志] XHR 监听已启动');
+        console.log('[MENG 日志] XHR 监听已启动');
 
         // 确保拦截器已安装
         if (!interceptorsInstalled) {
@@ -29,7 +29,7 @@
         }
       } else if (event.data.action === 'stop') {
         isMonitoring = false;
-        console.log('[MONGO 日志] XHR 监听已停止');
+        console.log('[MENG 日志] XHR 监听已停止');
       }
     }
   });
@@ -39,7 +39,7 @@
 
   function installInterceptors() {
     if (interceptorsInstalled) {
-      console.log('[MONGO 日志] 拦截器已安装，跳过');
+      console.log('[MENG 日志] 拦截器已安装，跳过');
       return;
     }
 
@@ -48,7 +48,7 @@
       interceptFetch();
       interceptorsInstalled = true;
     } catch (error) {
-      console.log('[MONGO 错误] 安装拦截器失败:', error);
+      console.log('[MENG 错误] 安装拦截器失败:', error);
     }
   }
 
@@ -100,7 +100,7 @@
               };
               captureRequest(requestData);
             } catch (error) {
-              console.log('[MONGO 错误] 处理XHR响应时发生错误:', error);
+              console.log('[MENG 错误] 处理XHR响应时发生错误:', error);
             }
           }
           if (originalOnReadyStateChange) {
@@ -114,13 +114,13 @@
       return result;
     };
 
-    console.log('[MONGO 日志] XMLHttpRequest 拦截器已安装');
+    console.log('[MENG 日志] XMLHttpRequest 拦截器已安装');
   }
 
   // 拦截 Fetch API
   function interceptFetch() {
     if (!originalFetch) {
-      console.log('[MONGO 日志] 当前环境不支持 Fetch API');
+      console.log('[MENG 日志] 当前环境不支持 Fetch API');
       return;
     }
 
@@ -134,7 +134,7 @@
 
       // 页面卸载检查
       if (isPageUnloading) {
-        return Promise.reject(new Error('[MONGO 监控] 页面正在卸载，Fetch请求已取消'));
+        return Promise.reject(new Error('[MENG 监控] 页面正在卸载，Fetch请求已取消'));
       }
       
       // 如果未在监控，则直接调用原始fetch
@@ -166,25 +166,25 @@
               };
               captureRequest(requestData);
             } catch (error) {
-              console.log('[MONGO 错误] 处理Fetch响应数据时发生错误:', error);
+              console.log('[MENG 错误] 处理Fetch响应数据时发生错误:', error);
             }
           }).catch(err => {
             if (!isPageUnloading) {
-              console.log('[MONGO 错误] 解析fetch响应失败:', err);
+              console.log('[MENG 错误] 解析fetch响应失败:', err);
             }
           });
         } catch (error) {
-          console.log('[MONGO 错误] 克隆fetch响应失败:', error);
+          console.log('[MENG 错误] 克隆fetch响应失败:', error);
         }
         return response;
       }).catch(error => {
         if (!isPageUnloading) {
-          console.log('[MONGO 错误] Fetch请求失败:', error);
+          console.log('[MENG 错误] Fetch请求失败:', error);
         }
         throw error;
       });
     };
-    console.log('[MONGO 日志] Fetch 拦截器已安装');
+    console.log('[MENG 日志] Fetch 拦截器已安装');
   }
 
   // 捕获请求数据
@@ -195,7 +195,7 @@
         payload: requestData
       }, '*');
     } catch (error) {
-      console.log('[MONGO 错误] 发送请求数据失败:', error);
+      console.log('[MENG 错误] 发送请求数据失败:', error);
     }
   }
 
@@ -212,7 +212,7 @@
           params = Object.fromEntries(fullUrl.searchParams.entries());
         }
       } catch (e) {
-        console.log('[MONGO 错误] 解析URL参数失败:', e);
+        console.log('[MENG 错误] 解析URL参数失败:', e);
       }
     }
 
@@ -248,7 +248,7 @@
         params = { ...params, ...parsedBody };
 
       } catch (error) {
-        console.log('[MONGO 错误] 解析请求体失败:', error);
+        console.log('[MENG 错误] 解析请求体失败:', error);
         // 仅在有意义时添加原始 body
         const rawBody = body?.toString();
         if (rawBody && rawBody.trim()) {
@@ -277,16 +277,16 @@
   // 立即安装拦截器（即使还没有开始监听）
   installInterceptors();
 
-  console.log('[MONGO 日志] injected.js 脚本已完全执行。');
+  console.log('[MENG 日志] injected.js 脚本已完全执行。');
 
   // 通知 content_script 脚本已准备好接收指令！！！
   try {
     window.postMessage({
       type: 'INJECTED_SCRIPT_READY'
     }, '*');
-    console.log('[MONGO 日志] Ready 信号已发送给 content_script.js');
+    console.log('[MENG 日志] Ready 信号已发送给 content_script.js');
   } catch(e) {
-    console.log('[MONGO 错误] 发送 Ready 信号失败:', e);
+    console.log('[MENG 错误] 发送 Ready 信号失败:', e);
   }
 
 })(); 

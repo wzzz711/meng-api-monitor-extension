@@ -17,7 +17,7 @@ class XHRMonitorPopup {
         return;
       }
       this.currentTab = tabs[0];
-      console.log('[MONGO 日志] 当前标签页:', this.currentTab?.id);
+      console.log('[MENG 日志] 当前标签页:', this.currentTab?.id);
 
       // 绑定事件监听器
       document.getElementById('startBtn').addEventListener('click', () => this.startListening());
@@ -30,7 +30,7 @@ class XHRMonitorPopup {
         // 确保是针对当前标签页的更新
         // 后台脚本发来的消息没有 sender.tab
         if (message.action === 'updateCount' && message.tabId === this.currentTab.id) {
-          console.log(`[MONGO 日志] Popup 接收到计数更新: ${message.count}`);
+          console.log(`[MENG 日志] Popup 接收到计数更新: ${message.count}`);
           this.updateCount(message.count);
         }
       });
@@ -39,7 +39,7 @@ class XHRMonitorPopup {
       await this.loadCurrentStatus();
 
     } catch (error) {
-      console.log('[MONGO 错误] 初始化 popup 失败:', error);
+      console.log('[MENG 错误] 初始化 popup 失败:', error);
       this.showStatus('初始化失败', 'error');
     }
   }
@@ -57,14 +57,14 @@ class XHRMonitorPopup {
       if (response && response.success) {
         this.isListening = response.isListening;
         this.requestCount = response.requestCount;
-        console.log('[MONGO 日志] 从后台加载当前状态:', response);
+        console.log('[MENG 日志] 从后台加载当前状态:', response);
       } else {
-        console.log('[MONGO 错误] 从后台加载状态失败:', response?.error);
+        console.log('[MENG 错误] 从后台加载状态失败:', response?.error);
         this.isListening = false;
         this.requestCount = 0;
       }
     } catch (error) {
-      console.log('[MONGO 错误] 无法从后台获取当前状态:', error);
+      console.log('[MENG 错误] 无法从后台获取当前状态:', error);
       this.isListening = false;
       this.requestCount = 0;
     } finally {
@@ -90,7 +90,7 @@ class XHRMonitorPopup {
       this.showStatus('正在监听...', 'success');
 
     } catch (error) {
-      console.log('[MONGO 错误] 开始监听失败:', error);
+      console.log('[MENG 错误] 开始监听失败:', error);
       this.isListening = false;
       this.updateUI();
       this.showStatus('刷新页面后才能开始监听', 'error');
@@ -113,7 +113,7 @@ class XHRMonitorPopup {
       this.updateUI();
       this.showStatus('已停止监听', 'info');
     } catch (error) {
-      console.log('[MONGO 错误] 停止监听失败:', error);
+      console.log('[MENG 错误] 停止监听失败:', error);
       this.showStatus('刷新页面后才能停止监听', 'error');
     }
   }
@@ -158,7 +158,7 @@ class XHRMonitorPopup {
       await chrome.tabs.sendMessage(this.currentTab.id, { action: 'clearRecords' });
 
     } catch (error) {
-      console.log('[MONGO 错误] 清空记录失败:', error);
+      console.log('[MENG 错误] 清空记录失败:', error);
       this.showStatus('清空记录失败', 'error');
     }
   }
@@ -172,10 +172,10 @@ class XHRMonitorPopup {
       const viewerUrl = `${chrome.runtime.getURL('viewer.html')}?tabId=${tabId}&tabTitle=${tabTitle}`;
       
       await chrome.tabs.create({ url: viewerUrl });
-      console.log('[MONGO 日志] 已打开查看页面, 用于查看标签页:', this.currentTab.id);
+      console.log('[MENG 日志] 已打开查看页面, 用于查看标签页:', this.currentTab.id);
 
     } catch (error) {
-      console.log('[MONGO 错误] 打开查看页面失败:', error);
+      console.log('[MENG 错误] 打开查看页面失败:', error);
       this.showStatus('打开查看页面失败', 'error');
     }
   }
@@ -211,6 +211,6 @@ class XHRMonitorPopup {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[MONGO 日志] Popup 正在初始化...');
+  console.log('[MENG 日志] Popup 正在初始化...');
   new XHRMonitorPopup();
 }); 

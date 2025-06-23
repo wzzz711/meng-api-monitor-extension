@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "MONGO 接口监听器",
+  "name": "MENG 接口监听器",
   "version": "1.0.0",
   "description": "监听网页接口请求，记录并提供查看、复制功能",
   "permissions": [
@@ -28,7 +28,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "MONGO 接口监听器"
+    "default_title": "MENG 接口监听器"
   },
   "web_accessible_resources": [
     {
