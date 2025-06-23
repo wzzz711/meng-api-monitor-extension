@@ -315,11 +315,26 @@ class XHRMonitorContent {
     });
 
     const textSpan = document.createElement('span');
-    textSpan.innerHTML = `监听中: <strong id="xhr-monitor-count">${this.requestCount}</strong>`;
+    textSpan.textContent = '监听中:';
+
+    const countElement = document.createElement('strong');
+    countElement.id = 'xhr-monitor-count';
+    countElement.textContent = this.requestCount;
+    countElement.style.cursor = 'pointer';
 
     this.overlayElement.appendChild(redDot);
     this.overlayElement.appendChild(textSpan);
+    this.overlayElement.appendChild(countElement);
     document.body.appendChild(this.overlayElement);
+
+    countElement.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ action: 'openViewer' });
+    });
+
+    // 阻止在数字上按下鼠标时触发父元素的拖拽
+    countElement.addEventListener('mousedown', (event) => {
+      event.stopPropagation();
+    });
 
     this.makeDraggable(this.overlayElement);
     this.startBreathingAnimation(redDot); // 为新创建的红点启动动画

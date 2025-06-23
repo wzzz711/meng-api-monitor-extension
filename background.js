@@ -66,12 +66,31 @@ class XHRMonitorBackground {
           sendResponse({ success: true, data: requests });
           break;
 
+        case 'openViewer': // 由 popup 或 content script 调用
+          const tabTitle = message.tabTitle || sender.tab?.title;
+          this.openViewer(tabId, tabTitle);
+          break;
+
         default:
           sendResponse({ success: false, error: '未知操作' });
       }
     } catch (error) {
       console.log('[MENG 错误] 处理消息失败:', error);
       sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  // 打开查看器页面
+  async openViewer(tabId, tabTitle = '无标题') {
+    if (!tabId) return;
+    try {
+      const encodedTitle = encodeURIComponent(tabTitle);
+      const viewerUrl = `${chrome.runtime.getURL('viewer.html')}?tabId=${tabId}&tabTitle=${encodedTitle}`;
+      
+      await chrome.tabs.create({ url: viewerUrl });
+      console.log(`[MENG 日志] 已根据请求打开查看器，目标标签页: ${tabId}`);
+    } catch (error) {
+      console.log('[MENG 错误] 打开查看器页面失败:', error);
     }
   }
 

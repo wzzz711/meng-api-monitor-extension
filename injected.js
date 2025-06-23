@@ -134,7 +134,8 @@
 
       // 页面卸载检查
       if (isPageUnloading) {
-        return Promise.reject(new Error('[MENG 监控] 页面正在卸载，Fetch请求已取消'));
+        console.log('[MENG 日志] 页面正在卸载，Fetch请求已静默取消。');
+        return new Promise(() => {}); // 返回一个永远不会解决的 Promise
       }
       
       // 如果未在监控，则直接调用原始fetch

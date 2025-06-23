@@ -167,15 +167,16 @@ class XHRMonitorPopup {
     try {
       if (!this.currentTab) return;
 
-      const tabId = this.currentTab.id;
-      const tabTitle = encodeURIComponent(this.currentTab.title || '无标题');
-      const viewerUrl = `${chrome.runtime.getURL('viewer.html')}?tabId=${tabId}&tabTitle=${tabTitle}`;
-      
-      await chrome.tabs.create({ url: viewerUrl });
-      console.log('[MENG 日志] 已打开查看页面, 用于查看标签页:', this.currentTab.id);
+      // 请求后台脚本打开查看器页面，并附带明确的参数
+      await chrome.runtime.sendMessage({
+        action: 'openViewer',
+        tabId: this.currentTab.id,
+        tabTitle: this.currentTab.title
+      });
+      console.log('[MENG 日志] 已请求后台打开查看页面, 用于查看标签页:', this.currentTab.id);
 
     } catch (error) {
-      console.log('[MENG 错误] 打开查看页面失败:', error);
+      console.log('[MENG 错误] 请求打开查看页面失败:', error);
       this.showStatus('打开查看页面失败', 'error');
     }
   }
