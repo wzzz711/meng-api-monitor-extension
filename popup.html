@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MONGO 接口监听器</title>
+  <style>
+    body {
+      width: 300px;
+      padding: 16px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 14px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h2 {
+      margin: 0;
+      color: #333;
+      font-size: 18px;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+
+    .start-btn {
+      background-color: #4CAF50;
+      color: white;
+      flex: 1;
+    }
+
+    .start-btn:hover {
+      background-color: #45a049;
+    }
+
+    .stop-btn {
+      background-color: #f44336;
+      color: white;
+      flex: 1;
+      display: none;
+    }
+
+    .stop-btn:hover {
+      background-color: #da190b;
+    }
+
+    .view-btn {
+      background-color: #2196F3;
+      color: white;
+      flex: 1;
+    }
+
+    .view-btn:hover {
+      background-color: #0b7dda;
+    }
+
+    .clear-btn {
+      background-color: #ff9800;
+      color: white;
+      width: 100%;
+    }
+
+    .clear-btn:hover {
+      background-color: #f57c00;
+    }
+
+    .status {
+      text-align: center;
+      padding: 8px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      margin-top: 12px;
+    }
+
+    .count {
+      font-weight: bold;
+      color: #2196F3;
+      margin-top: 8px;
+    }
+
+    .listening-status {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .quick-guide {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #777;
+    }
+
+    .guide-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #666;
+    }
+
+    .guide-list {
+      padding-left: 16px;
+      margin: 0 0 10px 0;
+    }
+
+    .guide-list li {
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .guide-list li::marker {
+      color: #999;
+    }
+
+    .guide-list:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h2>MONGO 接口监听器</h2>
+  </div>
+
+  <div class="controls">
+    <div class="button-group">
+      <button id="startBtn" class="start-btn">开始监听</button>
+      <button id="stopBtn" class="stop-btn">停止监听</button>
+      <button id="viewBtn" class="view-btn">查看请求</button>
+    </div>
+
+    <button id="clearBtn" class="clear-btn">清空记录</button>
+
+    <div class="status">
+      <div class="listening-status" id="status">未监听</div>
+      <div>已记录: <span class="count" id="count">0</span> 条请求</div>
+    </div>
+  </div>
+
+  <div class="quick-guide">
+    <div class="guide-title">快速上手</div>
+    <ul class="guide-list">
+      <li>点击「开始监听」捕获当前标签页的请求。</li>
+      <li>点击「查看请求」在查看器页面分析所有请求记录。</li>
+      <li>在查看器中，可复制单条或全部请求记录。</li>
+    </ul>
+
+    <div class="guide-title">注意事项</div>
+    <ul class="guide-list">
+      <li>刷新标签页不会清空记录，关闭标签页会清空。</li>
+      <li>每个标签页的数据都是独立的。</li>
+    </ul>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

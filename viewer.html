@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MONGO 请求记录查看器</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      margin: 0;
+      color: #333;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .copy-all-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .clear-btn {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .refresh-btn {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    .status {
+      margin-left: auto;
+      padding: 8px 12px;
+      background-color: #e3f2fd;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #1976d2;
+    }
+
+    .request-list {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .request-item {
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .request-item:last-child {
+      border-bottom: none;
+    }
+
+    .request-header-wrapper {
+      padding: 15px 20px;
+      user-select: none;
+    }
+
+    .request-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .expand-icon {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 6px solid #bbb;
+      margin-right: 10px;
+      transition: transform 0.2s ease;
+    }
+
+    .expand-icon.expanded {
+      transform: rotate(90deg);
+    }
+
+    .method-url {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .method {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .method.GET {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .method.POST {
+      background-color: #ff9800;
+      color: white;
+    }
+
+    .method.PUT {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    .method.DELETE {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .method.PATCH {
+      background-color: #9c27b0;
+      color: white;
+    }
+
+    .url {
+      color: #333;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 10px;
+    }
+
+    .request-actions {
+      display: flex;
+      gap: 8px;
+      cursor: default;
+    }
+
+    .copy-res-btn {
+      background-color: #26a69a;
+      color: white;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .copy-res-btn:hover {
+      background-color: #00897b;
+    }
+
+    .copy-btn {
+      background-color: #4CAF50;
+      color: white;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .copy-btn:hover {
+      background-color: #455a64;
+    }
+
+    .request-details {
+      display: none;
+      padding: 15px 20px 20px;
+      border-top: 1px solid #eee;
+    }
+
+    .detail-section {
+      margin-bottom: 15px;
+    }
+
+    .detail-title {
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    .detail-content {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .timestamp {
+      color: #666;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1 id="pageTitle">XHR请求记录查看器</h1>
+    <div class="controls">
+      <button id="refreshBtn" class="refresh-btn">刷新</button>
+      <button id="copyAllBtn" class="copy-all-btn">复制全部</button>
+      <button id="clearBtn" class="clear-btn">清空记录</button>
+      <div class="status" id="status">加载中...</div>
+    </div>
+  </div>
+
+  <div class="request-list" id="requestList">
+    <div class="empty-state">
+      <p>正在加载请求记录...</p>
+    </div>
+  </div>
+
+  <script src="viewer.js"></script>
+</body>
+
+</html>
