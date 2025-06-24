@@ -11,6 +11,11 @@ class XHRMonitorBackground {
       this.cleanupTabData(tabId);
     });
 
+    // 监听标签页更新事件，用于推送标题变化
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      this.handleTabUpdate(tabId, changeInfo, tab);
+    });
+
     // 扩展安装或启动时的初始化
     chrome.runtime.onInstalled.addListener(() => {
       console.log('[MENG 日志] XHR 监听器已安装');
@@ -51,6 +56,20 @@ class XHRMonitorBackground {
           sendResponse({ success: true, newCount: newCount });
           break;
         
+        case 'clearRequests': // 由 viewer 调用
+          await this.cleanupTabData(tabId);
+          sendResponse({ success: true });
+          break;
+
+        case 'getTabTitle': // 由 viewer 调用，查询最新标题
+          try {
+            const tab = await chrome.tabs.get(tabId);
+            sendResponse({ success: true, title: tab.title });
+          } catch (error) {
+            sendResponse({ success: false, error: '标签页可能已关闭' });
+          }
+          break;
+
         case 'getPopupState': // 由 popup 调用
           const state = await this.getTabState(tabId);
           sendResponse({ success: true, ...state });
@@ -77,6 +96,23 @@ class XHRMonitorBackground {
     } catch (error) {
       console.log('[MENG 错误] 处理消息失败:', error);
       sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  // 处理标签页更新事件的函数
+  handleTabUpdate(tabId, changeInfo, tab) {
+    // 只关心标题变化
+    if (changeInfo.title) {
+      console.log(`[MENG 日志] 检测到标签页 ${tabId} 标题变为: "${changeInfo.title}"，正在广播...`);
+      // 广播消息，让所有相关的 viewer 页面都能收到
+      chrome.runtime.sendMessage({
+        action: 'titleUpdated',
+        tabId: tabId,
+        newTitle: changeInfo.title
+      }).catch(e => {
+        // 这个错误是正常的，当没有 viewer 页面打开时，发送会失败
+        // console.log("[MENG 提示] 广播标题更新失败 (可能没有接收方)", e);
+      });
     }
   }
 

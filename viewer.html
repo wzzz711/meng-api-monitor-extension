@@ -43,6 +43,7 @@
     .controls {
       margin-top: 15px;
       display: flex;
+      align-items: center;
       gap: 10px;
     }
 
@@ -73,6 +74,93 @@
     .refresh-btn {
       background-color: #2196F3;
       color: white;
+    }
+
+    .refresh-control-group {
+      display: flex;
+      align-items: center;
+      border: 1px solid #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .refresh-control-group .refresh-btn {
+      border: none;
+      border-radius: 0;
+      transition: background-color 0.3s ease;
+    }
+
+    .refresh-control-group .refresh-btn.is-auto-refreshing {
+      background-color: #ccc;
+      color: #fff;
+      cursor: not-allowed;
+    }
+
+    .refresh-control-group .auto-refresh-control {
+      padding: 0 8px;
+    }
+
+    .auto-refresh-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+    }
+
+    input:checked+.slider {
+      background-color: #2196F3;
+    }
+
+    input:focus+.slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(20px);
+    }
+
+    .slider.round {
+      border-radius: 20px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
     }
 
     .status {
@@ -242,6 +330,25 @@
       padding: 40px;
       color: #666;
     }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 
@@ -249,14 +356,22 @@
   <div class="header">
     <h1 id="pageTitle">XHR请求记录查看器</h1>
     <div class="controls">
-      <button id="refreshBtn" class="refresh-btn">刷新</button>
-      <button id="copyAllBtn" class="copy-all-btn">复制全部</button>
-      <button id="clearBtn" class="clear-btn">清空记录</button>
-      <div class="status" id="status">加载中...</div>
+      <div class="refresh-control-group">
+        <button id="refreshBtn" class="refresh-btn" title="手动刷新记录">刷新</button>
+        <div class="auto-refresh-control">
+          <label class="switch" title="切换自动刷新">
+            <input type="checkbox" id="autoRefreshToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+      <button id="copyAllBtn" class="copy-all-btn" title="将当前显示的所有记录以JSON格式复制到剪贴板">全部复制</button>
+      <button id="clearBtn" class="clear-btn" title="清空当前标签页的所有记录" disabled>清空记录</button>
+      <div id="status" class="status">未加载</div>
     </div>
   </div>
 
-  <div class="request-list" id="requestList">
+  <div id="requestList" class="request-list">
     <div class="empty-state">
       <p>正在加载请求记录...</p>
     </div>

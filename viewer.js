@@ -4,17 +4,110 @@ class XHRViewer {
   constructor() {
     this.requests = [];
     this.currentTabId = null;
+    this.pageTitleInitialized = false; // 防止重复初始化页面标题和事件
+    this.isAutoRefreshEnabled = false; // 默认关闭
     this.init();
   }
 
   init() {
-    // 绑定事件监听器
+    // 确保在 DOM 完全加载后再执行所有操作
+    document.addEventListener('DOMContentLoaded', () => this.run());
+  }
+
+  run() {
+    // 绑定固定的 UI 元素事件
     document.getElementById('refreshBtn').addEventListener('click', () => this.loadRequests());
     document.getElementById('copyAllBtn').addEventListener('click', () => this.copyAllRequests());
     document.getElementById('clearBtn').addEventListener('click', () => this.clearAllRequests());
+    document.getElementById('autoRefreshToggle').addEventListener('change', (e) => this.handleAutoRefreshToggle(e));
 
-    // 加载请求数据
-    this.loadRequests();
+    // 监听 storage 变化，实现自动刷新
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      // 如果开关关闭，则不进行任何操作
+      if (!this.isAutoRefreshEnabled) return;
+
+      if (areaName === 'local' && this.currentTabId) {
+        if (changes[this.currentTabId.toString()]) {
+          console.log(`[MENG 日志] 检测到数据变更且自动刷新已开启，正在刷新...`);
+          this.loadRequests();
+        }
+      }
+    });
+
+    // 监听来自 background 的主动推送消息（如标题更新）
+    chrome.runtime.onMessage.addListener((message) => {
+      if (message.action === 'titleUpdated' && this.currentTabId && message.tabId.toString() === this.currentTabId) {
+        console.log(`[MENG 日志] 收到标题更新推送，新标题: "${message.newTitle}"`);
+        this.updatePageTitle(message.newTitle);
+      }
+    });
+
+    // 加载用户偏好并首次加载数据
+    this.loadAutoRefreshState().then(() => {
+      this.updateRefreshControlsUI(); // 根据加载的状态更新 UI
+      this.loadRequests();
+    });
+  }
+
+  // 根据状态更新刷新控件的 UI
+  updateRefreshControlsUI() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (!refreshBtn) return;
+
+    if (this.isAutoRefreshEnabled) {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = '自动刷新中';
+      refreshBtn.title = '自动刷新已开启，无需手动操作';
+      refreshBtn.classList.add('is-auto-refreshing');
+    } else {
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = '刷新';
+      refreshBtn.title = '手动刷新记录';
+      refreshBtn.classList.remove('is-auto-refreshing');
+    }
+  }
+
+  // 处理自动刷新开关的切换
+  handleAutoRefreshToggle(event) {
+    this.isAutoRefreshEnabled = event.target.checked;
+    this.updateRefreshControlsUI(); // 状态改变后，立即更新 UI
+    this.saveAutoRefreshState();
+    this.showToast(`自动刷新已${this.isAutoRefreshEnabled ? '开启' : '关闭'}`);
+
+    // 如果是开启自动刷新，则立即执行一次刷新
+    if (this.isAutoRefreshEnabled) {
+      console.log('[MENG 日志] 自动刷新已开启，立即刷新一次获取最新数据...');
+      this.loadRequests();
+    }
+  }
+
+  // 从 storage 加载自动刷新的状态
+  async loadAutoRefreshState() {
+    try {
+      const key = 'autoRefreshState';
+      const result = await chrome.storage.local.get([key]);
+      // 默认为 true，除非明确存储为 false
+      this.isAutoRefreshEnabled = result[key] !== false;
+      const toggle = document.getElementById('autoRefreshToggle');
+      if (toggle) {
+        toggle.checked = this.isAutoRefreshEnabled;
+      }
+    } catch (error) {
+      console.log('[MENG 错误] 加载自动刷新状态失败:', error);
+      // 在出错时保持默认值
+      this.isAutoRefreshEnabled = false;
+    }
+  }
+
+  // 保存自动刷新的状态到 storage
+  async saveAutoRefreshState() {
+    try {
+      await chrome.storage.local.set({
+        'autoRefreshState': this.isAutoRefreshEnabled
+      });
+    } catch (error) {
+      console.log('[MENG 错误] 保存自动刷新状态失败:', error);
+    }
   }
 
   async loadRequests() {
@@ -23,43 +116,26 @@ class XHRViewer {
 
       const urlParams = new URLSearchParams(window.location.search);
       const tabId = urlParams.get('tabId');
-      this.currentTabId = tabId;
 
-      if (tabId) {
-        const tabTitle = decodeURIComponent(urlParams.get('tabTitle') || '未知标题');
-        const pageTitleEl = document.getElementById('pageTitle');
-        
-        pageTitleEl.textContent = `来自标签页: ${tabTitle}`;
-        pageTitleEl.title = `点击切换到来源标签页: ${tabTitle}`; // 设置悬浮提示
-        pageTitleEl.classList.add('clickable');
+      // 首次加载时设置当前 tabId
+      if (!this.currentTabId) {
+        this.currentTabId = tabId;
+      }
 
-        // 添加点击事件监听器
-        pageTitleEl.addEventListener('click', async () => {
-          try {
-            // 获取目标标签页的信息，主要是为了拿到它的窗口ID
-            const tab = await chrome.tabs.get(parseInt(tabId, 10));
-            // 激活标签页
-            await chrome.tabs.update(tab.id, { active: true });
-            // 聚焦该标签页所在的窗口
-            await chrome.windows.update(tab.windowId, { focused: true });
-          } catch (error) {
-            console.log('[MENG 错误] 切换标签页失败 (可能已关闭):', error);
-            // 可以给用户一个提示
-            pageTitleEl.textContent = `(已关闭) ${pageTitleEl.textContent}`;
-            pageTitleEl.classList.remove('clickable');
-            pageTitleEl.title = '来源标签页已关闭';
-          }
-        });
+      if (this.currentTabId) {
+        // 只有在首次加载时才设置标题和点击事件，避免重复绑定
+        if (!this.pageTitleInitialized) {
+          this.initializePageHeader(this.currentTabId);
+        }
 
-        // 如果URL中提供了 tabId，则加载特定标签页的数据
-        console.log(`[MENG 日志] 准备加载标签页 ${tabId} (${tabTitle}) 的请求记录`);
-        const result = await chrome.storage.local.get([tabId]);
-        this.requests = result[tabId] || [];
+        console.log(`[MENG 日志] 准备加载标签页 ${this.currentTabId} 的请求记录`);
+        const result = await chrome.storage.local.get([this.currentTabId]);
+        this.requests = result[this.currentTabId] || [];
         this.renderRequests();
-        this.updateStatus(`已加载 ${this.requests.length} 条记录 (ID: ${tabId})`);
+        this.updateStatus(`已加载 ${this.requests.length} 条记录 (ID: ${this.currentTabId})`);
         document.getElementById('clearBtn').disabled = false;
       } else {
-        // 否则，加载所有标签页的数据作为后备
+        // 如果没有提供 tabId
         document.getElementById('pageTitle').textContent = '所有标签页的请求记录';
         console.log('[MENG 日志] 未提供 tabId，加载所有标签页的记录');
         const allData = await chrome.storage.local.get(null);
@@ -84,18 +160,65 @@ class XHRViewer {
     }
   }
 
+  initializePageHeader(tabId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTitle = decodeURIComponent(urlParams.get('tabTitle') || '未知标题');
+    this.updatePageTitle(initialTitle); // 使用一个统一的函数来更新标题
+
+    const pageTitleEl = document.getElementById('pageTitle');
+    pageTitleEl.classList.add('clickable');
+
+    pageTitleEl.addEventListener('click', async () => {
+      try {
+        const tab = await chrome.tabs.get(parseInt(tabId, 10));
+        await chrome.tabs.update(tab.id, {
+          active: true
+        });
+        await chrome.windows.update(tab.windowId, {
+          focused: true
+        });
+      } catch (error) {
+        console.log('[MENG 错误] 切换标签页失败 (可能已关闭):', error);
+        // 获取最新的标题来更新UI
+        const currentTitle = pageTitleEl.textContent.replace('来自标签页: ', '').replace(/^\(已关闭\) /, '');
+        pageTitleEl.textContent = `(已关闭) ${currentTitle}`;
+        pageTitleEl.classList.remove('clickable');
+        pageTitleEl.title = '来源标签页已关闭';
+      }
+    });
+
+    this.pageTitleInitialized = true; // 标记为已初始化
+  }
+
+  // 统一更新页面标题的函数
+  updatePageTitle(newTitle) {
+    const pageTitleEl = document.getElementById('pageTitle');
+    if (pageTitleEl && !pageTitleEl.textContent.includes('(已关闭)')) {
+      pageTitleEl.textContent = `来自标签页: ${newTitle}`;
+      // 更新悬浮提示，但要保留 "点击切换" 的部分
+      pageTitleEl.title = `点击切换到来源标签页: ${newTitle}`;
+    }
+  }
+
   renderRequests() {
     const container = document.getElementById('requestList');
+
+    if (!container) return; // DOM还没准备好
 
     if (this.requests.length === 0) {
       container.innerHTML = `
                 <div class="empty-state">
                     <p>暂无请求记录</p>
-                    <p>请在要监听的页面上点击"开始监听"按钮</p>
+                    <p>请在要监听的页面上点击"开始监听"按钮，以便捕获请求</p>
                 </div>
             `;
+      document.getElementById('copyAllBtn').disabled = true;
+      document.getElementById('clearBtn').disabled = true;
       return;
     }
+
+    document.getElementById('copyAllBtn').disabled = false;
+    document.getElementById('clearBtn').disabled = false;
 
     // 按时间倒序排列
     const sortedRequests = [...this.requests].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -111,7 +234,7 @@ class XHRViewer {
   renderRequestItem(request, index) {
     const timestamp = request.timestamp ? new Date(request.timestamp).toLocaleString() : '未知时间';
     const paramsStr = JSON.stringify(request.params || {}, null, 2);
-    
+
     let responseStr;
     let responseContent;
 
@@ -206,7 +329,7 @@ class XHRViewer {
         this.showToast('错误：找不到该记录');
         return;
       }
-      
+
       let responseText;
 
       if (request.res && request.res.__isNonJson) {
@@ -230,15 +353,23 @@ class XHRViewer {
         this.showToast('找不到该记录');
         return;
       }
-      
-      const { url, id: requestId, timestamp, ...rest } = request;
+
+      const {
+        url,
+        id: requestId,
+        timestamp,
+        ...rest
+      } = request;
 
       // 处理非JSON响应
       if (rest.res && rest.res.__isNonJson) {
         rest.res = rest.res.__originalText;
       }
 
-      const orderedRequest = { url, ...rest };
+      const orderedRequest = {
+        url,
+        ...rest
+      };
       const requestText = JSON.stringify(orderedRequest, null, 2);
       await navigator.clipboard.writeText(requestText);
       this.showToast('单条记录已复制');
@@ -249,118 +380,92 @@ class XHRViewer {
   }
 
   async copyAllRequests() {
+    if (this.requests.length === 0) {
+      this.showToast('没有可复制的记录');
+      return;
+    }
+
     try {
-      if (this.requests.length === 0) {
-        this.showToast('没有可复制的记录');
-        return;
-      }
-
-      // 按时间倒序排序
-      const sortedRequests = [...this.requests].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-      const orderedRequests = sortedRequests.map(request => {
-        const { url, id, timestamp, ...rest } = request;
-        
+      const simplifiedRequests = this.requests.map(req => {
+        const {
+          url,
+          id,
+          timestamp,
+          ...rest
+        } = req;
+        // 处理非JSON响应
         if (rest.res && rest.res.__isNonJson) {
           rest.res = rest.res.__originalText;
         }
-
-        return { url, ...rest };
+        return {
+          url,
+          ...rest
+        };
       });
-      const allRequestsText = JSON.stringify(orderedRequests, null, 2);
+
+      const allRequestsText = JSON.stringify(simplifiedRequests, null, 2);
       await navigator.clipboard.writeText(allRequestsText);
-      this.showToast(`已复制 ${this.requests.length} 条记录`);
+      this.showToast(`全部 ${this.requests.length} 条记录已复制`);
     } catch (error) {
       console.log('[MENG 错误] 复制全部记录失败:', error);
-      this.showToast('复制失败');
+      this.showToast('复制全部记录失败');
     }
   }
 
   async clearAllRequests() {
     if (!this.currentTabId) {
-      this.showToast('没有指定要清除的标签页');
+      this.showToast('无法确定要清空的标签页');
       return;
     }
 
     try {
-      // 清空当前标签页的记录
-      await chrome.storage.local.remove([this.currentTabId]);
+      const response = await chrome.runtime.sendMessage({
+        action: 'clearRequests',
+        tabId: this.currentTabId
+      });
 
-      // 通知 content script 更新状态
-      try {
-        await chrome.tabs.sendMessage(parseInt(this.currentTabId, 10), { action: 'clearRecords' });
-      } catch (e) {
-        console.log('[MENG 错误] 通知 content script 失败 (标签页可能已关闭):', e);
+      if (response && response.success) {
+        this.showToast('记录已清空'); 
+      } else {
+        throw new Error(response?.error || '未知错误');
       }
-
-      this.requests = [];
-      this.renderRequests();
-      this.updateStatus('记录已清空');
-      this.showToast('所有记录已清空');
     } catch (error) {
-      console.log('[MENG 错误] 清空记录失败:', error);
-      this.showToast('清空失败');
+      console.log('[MENG 错误] 发送清空请求失败:', error);
+      this.showToast(`清空失败: ${error.message}`);
     }
   }
 
   renderError(message) {
     const container = document.getElementById('requestList');
-    container.innerHTML = `
-            <div class="empty-state">
-                <p>❌ ${message}</p>
-                <button onclick="location.reload()">重试</button>
-            </div>
-        `;
+    if (!container) return;
+    container.innerHTML = `<div class="empty-state error"><p>${message}</p></div>`;
   }
 
   updateStatus(text) {
-    document.getElementById('status').textContent = text;
+    const statusEl = document.getElementById('status');
+    if (statusEl) {
+      statusEl.textContent = text;
+    }
   }
 
   showToast(message) {
-    // 立即清空上一个 toast
-    const lastToast = document.querySelector('.toast');
-    if (lastToast) {
-      lastToast.remove();
-    }
-
-    // 创建临时提示元素
     const toast = document.createElement('div');
-    toast.classList.add('toast');
-    toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
-            z-index: 10000;
-            animation: slideIn 0.15s ease;
-        `;
+    toast.className = 'toast';
     toast.textContent = message;
-
-    // 添加动画样式
-    const style = document.createElement('style');
-    style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        `;
-    document.head.appendChild(style);
-
     document.body.appendChild(toast);
 
-    // 3 秒后移除
+    // 触发动画
     setTimeout(() => {
-      toast.remove();
-      style.remove();
-    }, 2000);
+      toast.classList.add('show');
+    }, 10);
+
+    // 3秒后自动移除
+    setTimeout(() => {
+      toast.classList.remove('show');
+      toast.addEventListener('transitionend', () => toast.remove());
+    }, 3000);
   }
 }
 
 // 初始化查看器
-document.addEventListener('DOMContentLoaded', () => {
-  new XHRViewer();
-});
+new XHRViewer();
