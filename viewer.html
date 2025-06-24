@@ -57,7 +57,11 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 14px;
-      transition: background-color 0.2s ease;
+      transition: opacity 0.2s ease;
+    }
+
+    button:hover {
+      opacity: 0.8;
     }
 
     button:disabled {
@@ -92,7 +96,6 @@
       text-align: center;
       border: none;
       border-radius: 0;
-      transition: background-color 0.3s ease;
     }
 
     .refresh-control-group .refresh-btn.is-auto-refreshing {
@@ -279,23 +282,15 @@
     .copy-res-btn {
       background-color: #26a69a;
       color: white;
-      padding: 6px 8px;
+      padding: 4px 8px;
       font-size: 12px;
-    }
-
-    .copy-res-btn:hover {
-      background-color: #00897b;
     }
 
     .copy-btn {
       background-color: #4CAF50;
       color: white;
-      padding: 6px 8px;
+      padding: 4px 8px;
       font-size: 12px;
-    }
-
-    .copy-btn:hover {
-      background-color: #388E3C;
     }
 
     .request-details {
