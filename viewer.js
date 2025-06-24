@@ -27,7 +27,29 @@ class XHRViewer {
 
       if (tabId) {
         const tabTitle = decodeURIComponent(urlParams.get('tabTitle') || '未知标题');
-        document.getElementById('pageTitle').textContent = `来自标签页: ${tabTitle}`;
+        const pageTitleEl = document.getElementById('pageTitle');
+        
+        pageTitleEl.textContent = `来自标签页: ${tabTitle}`;
+        pageTitleEl.title = `点击切换到来源标签页: ${tabTitle}`; // 设置悬浮提示
+        pageTitleEl.classList.add('clickable');
+
+        // 添加点击事件监听器
+        pageTitleEl.addEventListener('click', async () => {
+          try {
+            // 获取目标标签页的信息，主要是为了拿到它的窗口ID
+            const tab = await chrome.tabs.get(parseInt(tabId, 10));
+            // 激活标签页
+            await chrome.tabs.update(tab.id, { active: true });
+            // 聚焦该标签页所在的窗口
+            await chrome.windows.update(tab.windowId, { focused: true });
+          } catch (error) {
+            console.log('[MENG 错误] 切换标签页失败 (可能已关闭):', error);
+            // 可以给用户一个提示
+            pageTitleEl.textContent = `(已关闭) ${pageTitleEl.textContent}`;
+            pageTitleEl.classList.remove('clickable');
+            pageTitleEl.title = '来源标签页已关闭';
+          }
+        });
 
         // 如果URL中提供了 tabId，则加载特定标签页的数据
         console.log(`[MENG 日志] 准备加载标签页 ${tabId} (${tabTitle}) 的请求记录`);
