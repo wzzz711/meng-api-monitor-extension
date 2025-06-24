@@ -123,6 +123,10 @@ XMLHttpRequest.prototype.open = function our_open(method, url, ...args) {
 };
 ```
 
+**时序图解：冲突与守卫的完整流程**
+
+![时序图](./sequenceDiagrams/open.png)
+
 在这个统一的模型下，整个冲突的产生就非常清晰了：
 1.  我们通过 `our_open` 拦截了 `MoushuRequestManager` 的调用。
 2.  我们在 `this` (`internalXhr` 实例)上添加了 `_monitor_` 属性。
