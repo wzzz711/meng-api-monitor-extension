@@ -21,16 +21,26 @@ class XHRViewer {
     document.getElementById('clearBtn').addEventListener('click', () => this.clearAllRequests());
     document.getElementById('autoRefreshToggle').addEventListener('change', (e) => this.handleAutoRefreshToggle(e));
 
-    // 监听 storage 变化，实现自动刷新
+    // 监听 storage 变化，实现列表自动刷新
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      // 如果开关关闭，则不进行任何操作
-      if (!this.isAutoRefreshEnabled) return;
+      if (areaName !== 'local' || !this.currentTabId || !changes[this.currentTabId.toString()]) {
+        return;
+      }
 
-      if (areaName === 'local' && this.currentTabId) {
-        if (changes[this.currentTabId.toString()]) {
-          console.log(`[MENG 日志] 检测到数据变更且自动刷新已开启，正在刷新...`);
-          this.loadRequests();
-        }
+      const change = changes[this.currentTabId.toString()];
+      const isCleared = typeof change.newValue === 'undefined';
+
+      // 如果是清空操作，则无视开关，必须刷新
+      if (isCleared) {
+        console.log('[MENG 日志] 检测到记录被清空，强制刷新UI...');
+        this.loadRequests();
+        return;
+      }
+
+      // 如果是数据更新（非清空），则遵循自动刷新开关的设置
+      if (this.isAutoRefreshEnabled) {
+        console.log(`[MENG 日志] 检测到数据变更且自动刷新已开启，正在刷新...`);
+        this.loadRequests();
       }
     });
 
@@ -213,12 +223,10 @@ class XHRViewer {
                 </div>
             `;
       document.getElementById('copyAllBtn').disabled = true;
-      document.getElementById('clearBtn').disabled = true;
       return;
     }
 
     document.getElementById('copyAllBtn').disabled = false;
-    document.getElementById('clearBtn').disabled = false;
 
     // 按时间倒序排列
     const sortedRequests = [...this.requests].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
