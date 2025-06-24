@@ -82,7 +82,8 @@ class XHRMonitorBackground {
 
         case 'openViewer': // 由 popup 或 content script 调用
           const tabTitle = message.tabTitle || sender.tab?.title;
-          this.openViewer(tabId, tabTitle);
+          const index = message.index || sender.tab?.index;
+          this.openViewer(tabId, index, tabTitle);
           break;
 
         default:
@@ -112,13 +113,22 @@ class XHRMonitorBackground {
   }
 
   // 打开查看器页面
-  async openViewer(tabId, tabTitle = '无标题') {
+  async openViewer(tabId, index, tabTitle = '无标题') {
     if (!tabId) return;
+
+    const createOptions = {
+      url: `${chrome.runtime.getURL('viewer.html')}?tabId=${tabId}&tabTitle=${encodeURIComponent(tabTitle)}`
+    };
+
+    if (index && typeof index === 'number') {
+      createOptions.index = index + 1;
+      console.log(`[MENG 日志] 准备在索引 ${createOptions.index} 位置打开查看器 (来源: ${tabId})`);
+    } else {
+      console.log(`[MENG 日志] 未提供来源标签页索引，将在末尾打开查看器`);
+    }
+
     try {
-      const encodedTitle = encodeURIComponent(tabTitle);
-      const viewerUrl = `${chrome.runtime.getURL('viewer.html')}?tabId=${tabId}&tabTitle=${encodedTitle}`;
-      
-      await chrome.tabs.create({ url: viewerUrl });
+      await chrome.tabs.create(createOptions);
       console.log(`[MENG 日志] 已根据请求打开查看器，目标标签页: ${tabId}`);
     } catch (error) {
       console.log('[MENG 错误] 打开查看器页面失败:', error);

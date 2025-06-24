@@ -188,8 +188,37 @@
     console.log('[MENG 日志] Fetch 拦截器已安装');
   }
 
+  // 判断 URL 是否应被忽略
+  function isIgnoredUrl(url) {
+    if (!url || typeof url !== 'string') {
+      return false;
+    }
+    try {
+      // 使用 URL API 的 pathname 属性来准确匹配路径的结尾
+      // 同时，移除 URL 参数部分，避免参数影响判断
+      const path = new URL(url, window.location.origin).pathname.toLowerCase();
+      const ignoredExtensions = [
+        // Images
+        '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico',
+        // Fonts
+        '.woff', '.woff2', '.ttf', '.otf', '.eot',
+        // Styles
+        '.css'
+      ];
+      return ignoredExtensions.some(ext => path.endsWith(ext));
+    } catch (e) {
+      // 如果 URL 解析失败，为安全起见不过滤
+      return false;
+    }
+  }
+
   // 捕获请求数据
   function captureRequest(requestData) {
+    if (isIgnoredUrl(requestData.url)) {
+      console.log('[MENG 日志] 已忽略静态资源:', requestData.url);
+      return; // 忽略此请求
+    }
+
     try {
       window.postMessage({
         type: 'XHR_INTERCEPTED',

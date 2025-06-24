@@ -171,7 +171,8 @@ class XHRMonitorPopup {
       await chrome.runtime.sendMessage({
         action: 'openViewer',
         tabId: this.currentTab.id,
-        tabTitle: this.currentTab.title
+        tabTitle: this.currentTab.title,
+        index: this.currentTab.index,
       });
       console.log('[MENG 日志] 已请求后台打开查看页面, 用于查看标签页:', this.currentTab.id);
 
