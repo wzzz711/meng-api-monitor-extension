@@ -6,6 +6,7 @@ class XHRViewer {
     this.currentTabId = null;
     this.pageTitleInitialized = false; // 防止重复初始化页面标题和事件
     this.isAutoRefreshEnabled = false; // 默认关闭
+    this.toastTimer = null; // 用于管理 toast 的定时器
     this.init();
   }
 
@@ -18,7 +19,6 @@ class XHRViewer {
     // 绑定固定的 UI 元素事件
     document.getElementById('refreshBtn').addEventListener('click', () => this.loadRequests());
     document.getElementById('copyAllBtn').addEventListener('click', () => this.copyAllRequests());
-    document.getElementById('clearBtn').addEventListener('click', () => this.clearAllRequests());
     document.getElementById('autoRefreshToggle').addEventListener('change', (e) => this.handleAutoRefreshToggle(e));
 
     // 监听 storage 变化，实现列表自动刷新
@@ -66,7 +66,7 @@ class XHRViewer {
 
     if (this.isAutoRefreshEnabled) {
       refreshBtn.disabled = true;
-      refreshBtn.textContent = '自动刷新中';
+      refreshBtn.textContent = '自动刷新';
       refreshBtn.title = '自动刷新已开启，无需手动操作';
       refreshBtn.classList.add('is-auto-refreshing');
     } else {
@@ -121,6 +121,12 @@ class XHRViewer {
   }
 
   async loadRequests() {
+    // 在开始加载前，先清除所有即时状态，比如toast
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      document.querySelector('.toast')?.classList.remove('show');
+    }
+
     try {
       this.updateStatus('加载中...');
 
@@ -143,7 +149,6 @@ class XHRViewer {
         this.requests = result[this.currentTabId] || [];
         this.renderRequests();
         this.updateStatus(`已加载 ${this.requests.length} 条记录 (ID: ${this.currentTabId})`);
-        document.getElementById('clearBtn').disabled = false;
       } else {
         // 如果没有提供 tabId
         document.getElementById('pageTitle').textContent = '所有标签页的请求记录';
@@ -158,9 +163,6 @@ class XHRViewer {
         this.requests = allRequests;
         this.renderRequests();
         this.updateStatus(`已加载 ${this.requests.length} 条记录 (来自所有标签页)`);
-        const clearBtn = document.getElementById('clearBtn');
-        clearBtn.disabled = true;
-        clearBtn.title = '无法在"所有标签页"模式下清空';
       }
 
     } catch (error) {
@@ -420,29 +422,6 @@ class XHRViewer {
     }
   }
 
-  async clearAllRequests() {
-    if (!this.currentTabId) {
-      this.showToast('无法确定要清空的标签页');
-      return;
-    }
-
-    try {
-      const response = await chrome.runtime.sendMessage({
-        action: 'clearRequests',
-        tabId: this.currentTabId
-      });
-
-      if (response && response.success) {
-        this.showToast('记录已清空'); 
-      } else {
-        throw new Error(response?.error || '未知错误');
-      }
-    } catch (error) {
-      console.log('[MENG 错误] 发送清空请求失败:', error);
-      this.showToast(`清空失败: ${error.message}`);
-    }
-  }
-
   renderError(message) {
     const container = document.getElementById('requestList');
     if (!container) return;
@@ -457,22 +436,31 @@ class XHRViewer {
   }
 
   showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
+    const toast = document.querySelector('.toast');
+    if (!toast) return;
+  
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+  
+    // 立即清除现有动画状态
+    toast.classList.remove('show');
+    toast.style.transition = 'none';
+    // 触发 reflow，强制浏览器应用上面的 transition:none
+    void toast.offsetHeight;
+  
     toast.textContent = message;
-    document.body.appendChild(toast);
-
-    // 触发动画
-    setTimeout(() => {
+    toast.style.transition = 'transform 0.15s ease, opacity 0.15s ease';
+  
+    requestAnimationFrame(() => {
       toast.classList.add('show');
-    }, 10);
-
-    // 3秒后自动移除
-    setTimeout(() => {
-      toast.classList.remove('show');
-      toast.addEventListener('transitionend', () => toast.remove());
-    }, 3000);
+      this.toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    });
   }
+  
 }
 
 // 初始化查看器

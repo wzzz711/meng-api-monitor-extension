@@ -56,11 +56,6 @@ class XHRMonitorBackground {
           sendResponse({ success: true, newCount: newCount });
           break;
         
-        case 'clearRequests': // 由 viewer 调用
-          await this.cleanupTabData(tabId);
-          sendResponse({ success: true });
-          break;
-
         case 'getTabTitle': // 由 viewer 调用，查询最新标题
           try {
             const tab = await chrome.tabs.get(tabId);

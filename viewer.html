@@ -47,6 +47,10 @@
       gap: 10px;
     }
 
+    .controls button {
+      width: 88px;
+    }
+
     button {
       padding: 8px 16px;
       border: none;
@@ -85,6 +89,7 @@
     }
 
     .refresh-control-group .refresh-btn {
+      text-align: center;
       border: none;
       border-radius: 0;
       transition: background-color 0.3s ease;
@@ -111,8 +116,8 @@
     .switch {
       position: relative;
       display: inline-block;
-      width: 40px;
-      height: 20px;
+      width: 34px;
+      height: 18px;
     }
 
     .switch input {
@@ -135,8 +140,8 @@
     .slider:before {
       position: absolute;
       content: "";
-      height: 14px;
-      width: 14px;
+      height: 12px;
+      width: 12px;
       left: 3px;
       bottom: 3px;
       background-color: white;
@@ -152,11 +157,11 @@
     }
 
     input:checked+.slider:before {
-      transform: translateX(20px);
+      transform: translateX(16px);
     }
 
     .slider.round {
-      border-radius: 20px;
+      border-radius: 18px;
     }
 
     .slider.round:before {
@@ -274,7 +279,7 @@
     .copy-res-btn {
       background-color: #26a69a;
       color: white;
-      padding: 4px 8px;
+      padding: 6px 8px;
       font-size: 12px;
     }
 
@@ -285,12 +290,12 @@
     .copy-btn {
       background-color: #4CAF50;
       color: white;
-      padding: 4px 8px;
+      padding: 6px 8px;
       font-size: 12px;
     }
 
     .copy-btn:hover {
-      background-color: #455a64;
+      background-color: #388E3C;
     }
 
     .request-details {
@@ -341,13 +346,12 @@
       border-radius: 5px;
       z-index: 1000;
       opacity: 0;
-      transform: translateY(-20px);
-      transition: transform 0.3s ease, opacity 0.3s ease;
+      transform: translateX(100%);
     }
 
     .toast.show {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateX(0);
     }
   </style>
 </head>
@@ -356,6 +360,7 @@
   <div class="header">
     <h1 id="pageTitle">XHR请求记录查看器</h1>
     <div class="controls">
+      <button id="copyAllBtn" class="copy-all-btn" title="将当前显示的所有记录以JSON格式复制到剪贴板">全部复制</button>
       <div class="refresh-control-group">
         <button id="refreshBtn" class="refresh-btn" title="手动刷新记录">刷新</button>
         <div class="auto-refresh-control">
@@ -365,8 +370,6 @@
           </label>
         </div>
       </div>
-      <button id="copyAllBtn" class="copy-all-btn" title="将当前显示的所有记录以JSON格式复制到剪贴板">全部复制</button>
-      <button id="clearBtn" class="clear-btn" title="清空当前标签页的所有记录" disabled>清空记录</button>
       <div id="status" class="status">未加载</div>
     </div>
   </div>
@@ -376,6 +379,8 @@
       <p>正在加载请求记录...</p>
     </div>
   </div>
+
+  <div class="toast"></div>
 
   <script src="viewer.js"></script>
 </body>
