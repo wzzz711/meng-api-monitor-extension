@@ -177,6 +177,15 @@ class XHRViewer {
     const initialTitle = decodeURIComponent(urlParams.get('tabTitle') || '未知标题');
     this.updatePageTitle(initialTitle); // 使用一个统一的函数来更新标题
 
+    // 立即向 background 请求最新的标题
+    chrome.runtime.sendMessage({ action: 'getTabTitle', tabId: parseInt(tabId, 10) }, (response) => {
+      if (response && response.success) {
+        this.updatePageTitle(response.title);
+      } else {
+        console.log('[MENG 警告] 获取最新标签页标题失败:', response?.error || '未知错误');
+      }
+    });
+
     const pageTitleEl = document.getElementById('pageTitle');
     pageTitleEl.classList.add('clickable');
 
