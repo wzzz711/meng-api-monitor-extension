@@ -250,19 +250,25 @@ class XHRViewer {
     this.bindRequestEvents();
   }
 
-  renderRequestItem(request, index) {
+  renderRequestItem(request) {
     const timestamp = request.timestamp ? new Date(request.timestamp).toLocaleString() : '未知时间';
-    const paramsStr = JSON.stringify(request.params || {}, null, 2);
 
-    let responseStr;
-    let responseContent;
+    // 辅助函数用来编码和格式化 JSON
+    const sanitizeAndFormatJSON = (data) => {
+      if (data && data.__isNonJson) {
+        return `<div class="detail-content non-json">数据非 JSON 格式，请复制记录查看</div>`;
+      }
+      
+      let jsonString = JSON.stringify(data || {}, null, 2);
+      
+      // 进行 HTML 实体编码，防止浏览器解析其中的 HTML 标签
+      jsonString = jsonString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      
+      return `<div class="detail-content">${jsonString}</div>`;
+    };
 
-    if (request.res && request.res.__isNonJson) {
-      responseContent = `<div class="detail-content non-json">数据非 JSON 格式，请复制记录查看</div>`;
-    } else {
-      responseStr = JSON.stringify(request.res || {}, null, 2);
-      responseContent = `<div class="detail-content">${responseStr}</div>`;
-    }
+    const paramsContent = sanitizeAndFormatJSON(request.params);
+    const responseContent = sanitizeAndFormatJSON(request.res);
 
     return `
       <div class="request-item" data-id="${request.id}">
@@ -287,7 +293,7 @@ class XHRViewer {
           </div>
           <div class="detail-section">
             <div class="detail-title">请求参数</div>
-            <div class="detail-content">${paramsStr}</div>
+            ${paramsContent}
           </div>
           <div class="detail-section">
             <div class="detail-title">响应数据</div>

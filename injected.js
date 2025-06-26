@@ -83,7 +83,6 @@
       }
       this._monitor_is_sending = true;
 
-
       if (isMonitoring && this._monitor_url) {
         const method = this._monitor_method;
         const url = this._monitor_url;
