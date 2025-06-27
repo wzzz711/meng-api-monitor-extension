@@ -196,8 +196,6 @@
 
     .request-item {
       border-bottom: 1px solid #f0f0f0;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
     }
 
     .request-item:last-child {
@@ -206,7 +204,13 @@
 
     .request-header-wrapper {
       padding: 15px 20px;
+      cursor: pointer;
       user-select: none;
+      transition: background-color 0.2s ease;
+    }
+
+    .request-header-wrapper:hover {
+      background-color: rgba(0, 0, 0, 0.01);
     }
 
     .request-header {
@@ -304,7 +308,7 @@
     .request-details {
       display: none;
       padding: 15px 20px 20px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid #f0f0f0;
     }
 
     .detail-section {
@@ -343,7 +347,7 @@
       position: fixed;
       top: 20px;
       right: 20px;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(0, 0, 0, 0.6);
       color: white;
       padding: 8px 12px;
       border-radius: 5px;
