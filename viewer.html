@@ -10,16 +10,22 @@
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      padding: 20px;
       background-color: #f5f5f5;
+      min-width: 600px;
+    }
+
+    .header-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: #f5f5f5;
+      padding: 20px 20px 0;
     }
 
     .header {
       background: white;
       padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid #f0f0f0;
     }
 
     .header h1 {
@@ -60,7 +66,7 @@
       transition: opacity 0.2s ease;
     }
 
-    button:hover {
+    button:not([disabled]):hover {
       opacity: 0.8;
     }
 
@@ -180,14 +186,16 @@
       color: #1976d2;
     }
 
+    .request-list-wrapper {
+      padding: 20px;
+    }
+
     .request-list {
       background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .request-item {
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #f0f0f0;
       cursor: pointer;
       transition: background-color 0.2s ease;
     }
@@ -352,27 +360,30 @@
 </head>
 
 <body>
-  <div class="header">
-    <h1 id="pageTitle">XHR请求记录查看器</h1>
-    <div class="controls">
-      <button id="copyAllBtn" class="copy-all-btn" title="将当前显示的所有记录以JSON格式复制到剪贴板">全部复制</button>
-      <div class="refresh-control-group">
-        <button id="refreshBtn" class="refresh-btn" title="手动刷新记录">刷新</button>
-        <div class="auto-refresh-control">
-          <label class="switch" title="切换自动刷新">
-            <input type="checkbox" id="autoRefreshToggle">
-            <span class="slider round"></span>
-          </label>
+  <div class="header-wrapper">
+    <div class="header">
+      <h1 id="pageTitle">XHR请求记录查看器</h1>
+      <div class="controls">
+        <button id="copyAllBtn" class="copy-all-btn" title="将当前显示的所有记录以JSON格式复制到剪贴板">全部复制</button>
+        <div class="refresh-control-group">
+          <button id="refreshBtn" class="refresh-btn" title="手动刷新记录">刷新</button>
+          <div class="auto-refresh-control">
+            <label class="switch" title="切换自动刷新">
+              <input type="checkbox" id="autoRefreshToggle">
+              <span class="slider round"></span>
+            </label>
+          </div>
         </div>
+        <div id="status" class="status">未加载</div>
       </div>
-      <div id="status" class="status">未加载</div>
     </div>
   </div>
 
-  <div id="requestList" class="request-list">
-    <div class="empty-state">
-      <p>正在加载请求记录...</p>
-    </div>
+  <div class="request-list-wrapper">
+    <div id="requestList" class="request-list">
+      <div class="empty-state">
+        <p>正在加载请求记录...</p>
+      </div>
   </div>
 
   <div class="toast"></div>
