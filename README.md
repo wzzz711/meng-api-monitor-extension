@@ -12,7 +12,7 @@
 
 ## 🏗️ 架构概览
 
-![时序图](./sequenceDiagrams/system.png)
+![时序图](./docs/images/system_architecture_sequence.png)
 
 本扩展基于一个标准的四部分架构，这也是需要与网页进行深度交互的 Chrome 扩展所普遍采用的强大模式。
 
@@ -20,6 +20,8 @@
 -   **`content.js` (通信桥梁)**: 被注入到目标页面中。它扮演着桥梁的角色，负责与其他部分通信，并管理页面上的悬浮窗。
 -   **`injected.js` (核心探针)**: 拦截逻辑的核心。它由内容脚本注入到页面自身的 JavaScript 上下文中，从而获得了修改 `XMLHttpRequest` 和 `fetch` 原型的必要权限。
 -   **`background.js` (控制大脑)**: 扩展的后台服务。它管理全局状态，使用 `chrome.storage` 处理数据存储，并协调不同标签页之间的通信。
+
+有关更深入的开发细节和架构思考，请参阅 [开发者笔记](./docs/DEV_NOTES.md)。
 
 ## 🚀 如何安装
 
